@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Catering Business Dashboard</title>
+    <style>
+      /* Global Styles */
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f7fc;
+      }
+
+      /* Sidebar Styles */
+      .sidebar {
+        width: 250px;
+        height: 100vh;
+        background-color: #2c3e50;
+        color: #fff;
+        position: fixed;
+        top: 0;
+        left: 0;
+        padding-top: 20px;
+      }
+
+      .sidebar .logo {
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 40px;
+      }
+
+      .sidebar a {
+        display: block;
+        padding: 15px;
+        text-decoration: none;
+        color: #fff;
+        font-size: 16px;
+        margin: 10px 0;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+      }
+
+      .sidebar a:hover {
+        background-color: #34495e;
+      }
+
+      .sidebar .logout {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px;
+        background-color: #e74c3c;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      /* Main Content Area */
+      .main-content {
+        margin-left: 250px;
+        padding: 20px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .header .date-time {
+        font-size: 18px;
+        color: #7f8c8d;
+      }
+
+      .header .search-bar input {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      /* Dashboard Grid Layout */
+      .dashboard {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+
+      .dashboard .section {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .dashboard .section h3 {
+        margin-top: 0;
+        color: #2c3e50;
+      }
+
+      .dashboard .section .data-box {
+        font-size: 28px;
+        color: #2980b9;
+        font-weight: bold;
+      }
+
+      .dashboard .section .data-box.small {
+        font-size: 18px;
+        color: #8e44ad;
+      }
+
+      .dashboard .section .graph {
+        width: 100%;
+        height: 150px;
+        background-color: #ecf0f1;
+        margin-top: 20px;
+        border-radius: 6px;
+      }
+
+      /* Tables */
+      .dashboard .section table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+
+      .dashboard .section table th,
+      .dashboard .section table td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .dashboard .section table th {
+        background-color: #f0f3f5;
+      }
+
+      .footer {
+        text-align: center;
+        padding: 20px;
+        background-color: #2c3e50;
+        color: white;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">Catering Dashboard</div>
+      <a href="#">Dashboard Overview</a>
+      <a href="#">Reservations</a>
+      <a href="#">Menu Management</a>
+      <a href="#">Payments</a>
+      <a href="#">Customer Management</a>
+      <a href="#">Staff</a>
+      <a href="#">Reports & Analytics</a>
+      <a href="#">Settings</a>
+      <div class="logout">Logout</div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-left">
+          <h2>Catering Business Dashboard</h2>
+        </div>
+        <div class="header-right">
+          <div class="date-time">December 22, 2025</div>
+          <div class="search-bar">
+            <input type="text" placeholder="Search..." />
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Grid -->
+      <div class="dashboard">
+        <!-- Upcoming Reservations Section -->
+        <div class="section">
+          <h3>Upcoming Reservations</h3>
+          <div class="data-box">10</div>
+          <table>
+            <tr>
+              <th>Reservation ID</th>
+              <th>Customer Name</th>
+              <th>Date</th>
+            </tr>
+            <tr>
+              <td>#101</td>
+              <td>John Doe</td>
+              <td>2025-12-23</td>
+            </tr>
+            <tr>
+              <td>#102</td>
+              <td>Jane Smith</td>
+              <td>2025-12-24</td>
+            </tr>
+            <!-- Add more rows as needed -->
+          </table>
+        </div>
+
+        <!-- Revenue Overview Section -->
+        <div class="section">
+          <h3>Revenue Overview</h3>
+          <div class="data-box">$5,200</div>
+          <div class="graph"></div>
+        </div>
+
+        <!-- Quick Actions Section -->
+        <div class="section">
+          <h3>Quick Actions</h3>
+          <div class="data-box small">Add New Reservation</div>
+          <div class="data-box small">View Today's Orders</div>
+          <div class="data-box small">Send Invoice</div>
+        </div>
+      </div>
+
+      <!-- Bottom Sections for More Insights -->
+      <div class="dashboard">
+        <!-- Revenue Breakdown by Category -->
+        <div class="section">
+          <h3>Revenue Breakdown</h3>
+          <div class="data-box">$1,500 from Weddings</div>
+          <div class="data-box">$2,200 from Corporate Events</div>
+          <div class="data-box">$1,500 from Parties</div>
+        </div>
+
+        <!-- Customer Insights Section -->
+        <div class="section">
+          <h3>Customer Insights</h3>
+          <div class="data-box">15 New Customers This Month</div>
+          <div class="graph"></div>
+        </div>
+
+        <!-- Staff Overview Section -->
+        <div class="section">
+          <h3>Staff Overview</h3>
+          <div class="data-box">5 Staff Available</div>
+          <div class="graph"></div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p>© 2025 Catering Business</p>
+      </div>
+    </div>
+  </body>
+</html>

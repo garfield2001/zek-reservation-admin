@@ -18,6 +18,7 @@ import {
   BarChart,
 } from "lucide-react";
 import { MOCK_ACTIVITY_LOG } from "@/lib/mock-data";
+import { getCookie, clearCookie } from "@/lib/utils";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -52,10 +53,20 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
     };
   }, []);
 
-  const handleLogout = () => {
-    // Clear cookie
-    document.cookie =
-      "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+  const handleLogout = async () => {
+    const token = getCookie("auth_token");
+    if (token) {
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } catch {}
+    }
+    clearCookie("auth_token");
+    clearCookie("refresh_token");
     router.push("/login");
   };
 
@@ -209,14 +220,14 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-zek-red"
                     >
                       <Users className="mr-3 h-4 w-4" />
-                      Manage Staff
+                      Manage Staffs
                     </Link>
                     <Link
                       href="/analytics"
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-zek-red"
                     >
                       <BarChart className="mr-3 h-4 w-4" />
-                      Manage Analytics
+                      Analytics
                     </Link>
                   </div>
 

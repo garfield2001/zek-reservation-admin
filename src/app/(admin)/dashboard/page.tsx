@@ -11,8 +11,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import ReservationTable from "@/components/ReservationTable";
-import RecentActivity from "@/components/RecentActivity";
-import PaymentAlerts from "@/components/PaymentAlerts";
 import { MOCK_RESERVATIONS, Reservation } from "@/lib/mock-data";
 import CreateReservationModal from "@/components/CreateReservationModal";
 import Link from "next/link";
@@ -445,25 +443,21 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-1 gap-6">
-          <ReservationTable
-            reservations={filteredRecentReservations}
-            showDateRangeControls
-            recentRange={recentRange}
-            onRecentRangeChange={setRecentRange}
-            recentStartDate={recentStartDate}
-            recentEndDate={recentEndDate}
-            onRecentStartDateChange={setRecentStartDate}
-            onRecentEndDateChange={setRecentEndDate}
-          />
-        </div>
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2">
-            <ActivityCalendar reservations={reservations} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <ReservationTable
+              reservations={filteredRecentReservations}
+              showDateRangeControls
+              recentRange={recentRange}
+              onRecentRangeChange={setRecentRange}
+              recentStartDate={recentStartDate}
+              recentEndDate={recentEndDate}
+              onRecentStartDateChange={setRecentStartDate}
+              onRecentEndDateChange={setRecentEndDate}
+            />
           </div>
-          <div className="space-y-6">
-            <PaymentAlerts />
-            <RecentActivity />
+          <div className="lg:col-span-1">
+            <ActivityCalendar reservations={reservations} />
           </div>
         </div>
       </div>

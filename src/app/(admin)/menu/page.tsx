@@ -309,35 +309,7 @@ export default function CateringPage() {
             Manage your packages, menus, and dish options.
           </p>
         </div>
-        <div className="flex gap-2">
-          {activeTab === "packages" && (
-            <button
-              onClick={() => handleOpenPackageModal()}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-zek-red hover:bg-zek-light-red transition-all"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Package
-            </button>
-          )}
-          {activeTab === "dishes" && (
-            <button
-              onClick={() => handleOpenDishModal()}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-zek-red hover:bg-zek-light-red transition-all"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Dish
-            </button>
-          )}
-          {activeTab === "addons" && (
-            <button
-              onClick={() => handleOpenAddOnModal()}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-zek-red hover:bg-zek-light-red transition-all"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Item
-            </button>
-          )}
-        </div>
+        <div className="flex gap-2" />
       </div>
 
       {/* Tabs */}
@@ -383,8 +355,15 @@ export default function CateringPage() {
       {activeTab === "packages" && (
         <div className="space-y-6">
           {/* Package Filter */}
-          <div className="flex justify-start">
-            <div className="relative w-full sm:w-64">
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleOpenPackageModal()}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-zek-red hover:bg-zek-light-red transition-all"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create New Package
+            </button>
+            <div className="relative w-full sm:w-64 ml-auto">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Tag className="h-4 w-4 text-gray-400" />
               </div>
@@ -540,8 +519,15 @@ export default function CateringPage() {
       {activeTab === "dishes" && (
         <div className="space-y-6">
           {/* Filter Dropdown */}
-          <div className="flex justify-start">
-            <div className="relative w-full sm:w-64">
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleOpenDishModal()}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-zek-red hover:bg-zek-light-red transition-all"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Dish
+            </button>
+            <div className="relative w-full sm:w-64 ml-auto">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Tag className="h-4 w-4 text-gray-400" />
               </div>
@@ -672,81 +658,7 @@ export default function CateringPage() {
         </div>
       )}
 
-      {activeTab === "addons" && (
-        <div className="space-y-8">
-          {addOnCategories.map((category) => {
-            const categoryItems = filteredAddOns.filter(
-              (a) => a.category === category
-            );
-            if (categoryItems.length === 0) return null;
-
-            return (
-              <div
-                key={category}
-                className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
-              >
-                <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
-                  <h3 className="font-bold text-gray-900">{category}</h3>
-                </div>
-                <div className="p-6">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead>
-                        <tr>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Item Name
-                          </th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Description
-                          </th>
-                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Price
-                          </th>
-                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {categoryItems.map((item) => (
-                          <tr key={item.id} className="hover:bg-gray-50">
-                            <td className="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {item.name}
-                            </td>
-                            <td className="px-3 py-3 text-sm text-gray-500">
-                              {item.description || "-"}
-                            </td>
-                            <td className="px-3 py-3 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
-                              ₱{item.price.toLocaleString()}
-                              <span className="text-xs text-gray-400 font-normal ml-1">
-                                /{item.unit}
-                              </span>
-                            </td>
-                            <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-medium">
-                              <button
-                                onClick={() => handleOpenAddOnModal(item)}
-                                className="text-blue-600 hover:text-blue-900 mr-3"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteAddOn(item.id)}
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                Delete
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {activeTab === "addons" && null}
 
       {/* --- Modals --- */}
 
@@ -1372,7 +1284,7 @@ export default function CateringPage() {
                     }`}
                   >
                     <Check className="w-4 h-4 mr-2" />
-                    {editingPackage ? "Save Changes" : "Create Package"}
+                    {editingPackage ? "Save Changes" : "Create New Package"}
                   </button>
                 )}
               </div>

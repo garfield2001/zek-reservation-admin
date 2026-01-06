@@ -4,7 +4,17 @@ import type { NextRequest } from "next/server";
 export function proxy(request: NextRequest) {
   const token = request.cookies.get("auth_token")?.value;
 
-  const protectedRoutes = ["/dashboard"];
+  const protectedRoutes = [
+    "/analytics",
+    "/customers",
+    "/dashboard",
+    "/events",
+    "/menu",
+    "/payments",
+    "/reports",
+    "/reservations",
+    "/staff",
+  ];
   const isProtectedRoute = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   );
@@ -30,8 +40,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };
-

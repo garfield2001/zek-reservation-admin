@@ -7,27 +7,27 @@ import Preloader from "@/components/Preloader";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { getCookie, clearCookie } from "@/lib/utils";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Auto logout after 10 minutes of inactivity
   useIdleTimeout(600000);
 
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    // Simulate loading time (e.g., fetching initial data)
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000); // 2 seconds
+    }, 2000);
 
-    // Responsive Sidebar: Auto-collapse on smaller screens
     const handleResize = () => {
       if (window.innerWidth < 1024) {
         setIsSidebarCollapsed(true);
@@ -36,7 +36,6 @@ export default function DashboardLayout({
       }
     };
 
-    // Set initial state
     handleResize();
 
     window.addEventListener("resize", handleResize);
@@ -46,6 +45,37 @@ export default function DashboardLayout({
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  useEffect(() => {
+    const token = getCookie("auth_token");
+    if (!token) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const verifySession = async () => {
+      try {
+        const response = await fetch("/api/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!response.ok && !cancelled) {
+          clearCookie("auth_token");
+          clearCookie("refresh_token");
+          router.push("/login");
+        }
+      } catch {
+      }
+    };
+
+    verifySession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   if (!isMounted) {
     return null;

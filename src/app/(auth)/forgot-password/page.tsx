@@ -19,7 +19,6 @@ export default function ForgotPasswordPage() {
       const apiUrl =
         process.env.NEXT_PUBLIC_API_URL || "https://api.zekcatering.com";
 
-      // Example API call - replace with actual endpoint
       const response = await fetch(`${apiUrl}/auth/forgot-password`, {
         method: "POST",
         headers: {

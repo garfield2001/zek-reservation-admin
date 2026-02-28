@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { MOCK_RESERVATIONS, Reservation } from "@/lib/mock-data";
 import ReservationTable from "@/components/ReservationTable";
 import CreateReservationModal from "@/components/CreateReservationModal";
@@ -12,15 +12,70 @@ export default function ReservationsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [reservations, setReservations] =
     useState<Reservation[]>(MOCK_RESERVATIONS);
+  const [recentRange, setRecentRange] = useState<
+    "3" | "7" | "30" | "all" | "custom"
+  >("30");
+  const [recentStartDate, setRecentStartDate] = useState("");
+  const [recentEndDate, setRecentEndDate] = useState("");
 
   const tabs = ["All", "Pending", "Confirmed", "Completed", "Cancelled"];
+
+  const parseMMDDYYYY = (value: string) => {
+    const parts = value.split("-");
+    if (parts.length !== 3) return null;
+    const [mm, dd, yyyy] = parts;
+    const month = Number(mm);
+    const day = Number(dd);
+    const year = Number(yyyy);
+    if (!month || !day || !year) return null;
+    const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime())) return null;
+    return date;
+  };
 
   const filteredReservations = reservations.filter((res) => {
     const matchesTab = activeTab === "All" || res.status === activeTab;
     const matchesSearch =
       res.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       res.packageName.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesTab && matchesSearch;
+
+    let matchesDate = true;
+    const eventDate = new Date(res.date);
+
+    if (!isNaN(eventDate.getTime())) {
+      if (recentRange === "3" || recentRange === "7" || recentRange === "30") {
+        const days = recentRange === "3" ? 3 : recentRange === "7" ? 7 : 30;
+        const now = new Date();
+        const cutoff = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - days
+        );
+        matchesDate = eventDate >= cutoff;
+      } else if (recentRange === "custom") {
+        const start = recentStartDate ? parseMMDDYYYY(recentStartDate) : null;
+        const end = recentEndDate ? parseMMDDYYYY(recentEndDate) : null;
+        if (start && eventDate < start) {
+          matchesDate = false;
+        }
+        if (end) {
+          const endOfDay = new Date(
+            end.getFullYear(),
+            end.getMonth(),
+            end.getDate(),
+            23,
+            59,
+            59,
+            999
+          );
+          if (eventDate > endOfDay) {
+            matchesDate = false;
+          }
+        }
+      }
+    }
+
+    return matchesTab && matchesSearch && matchesDate;
   });
 
   const handleCreateReservation = (newReservation: Omit<Reservation, "id">) => {
@@ -83,9 +138,16 @@ export default function ReservationsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <ReservationTable reservations={filteredReservations} />
-        </div>
+        <ReservationTable
+          reservations={filteredReservations}
+          showDateRangeControls
+          recentRange={recentRange}
+          onRecentRangeChange={setRecentRange}
+          recentStartDate={recentStartDate}
+          recentEndDate={recentEndDate}
+          onRecentStartDateChange={setRecentStartDate}
+          onRecentEndDateChange={setRecentEndDate}
+        />
       </div>
       <CreateReservationModal
         isOpen={isCreateModalOpen}

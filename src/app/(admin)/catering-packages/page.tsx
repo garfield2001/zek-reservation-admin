@@ -36,7 +36,7 @@ import {
   PackageInclusion,
 } from "@/lib/mock-data";
 
-export default function CateringPage() {
+export default function CateringPackagesPage() {
   const [activeTab, setActiveTab] = useState<"packages" | "dishes" | "addons">(
     "packages"
   );

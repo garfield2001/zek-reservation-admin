@@ -19,6 +19,8 @@ export function LoginForm() {
     const reason = searchParams.get("reason");
     if (reason === "inactive") {
       setError("You have been logged out due to inactivity");
+    } else if (reason === "session_expired") {
+      setError("Your session has expired. Please sign in again.");
     }
   }, [searchParams]);
 
@@ -67,14 +69,30 @@ export function LoginForm() {
         throw new Error("Invalid login response from server");
       }
 
+      const accessTokenExpiresInSeconds =
+        typeof data.accessTokenExpiresInSeconds === "number"
+          ? data.accessTokenExpiresInSeconds
+          : 15 * 60;
+
+      const sessionMaxAgeSeconds =
+        typeof data.sessionMaxAgeSeconds === "number"
+          ? data.sessionMaxAgeSeconds
+          : 7 * 24 * 60 * 60;
+
       setCookie("auth_token", data.token, {
-        maxAgeSeconds: 15 * 60,
+        maxAgeSeconds: sessionMaxAgeSeconds,
         path: "/",
         sameSite: "Strict",
       });
 
       setCookie("refresh_token", data.refreshToken, {
-        maxAgeSeconds: 7 * 24 * 60 * 60,
+        maxAgeSeconds: sessionMaxAgeSeconds,
+        path: "/",
+        sameSite: "Strict",
+      });
+
+      setCookie("auth_token_ttl", String(accessTokenExpiresInSeconds), {
+        maxAgeSeconds: sessionMaxAgeSeconds,
         path: "/",
         sameSite: "Strict",
       });

@@ -7,17 +7,18 @@ import Preloader from "@/components/Preloader";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { getCookie, clearCookie } from "@/lib/utils";
+import { useRouter, usePathname } from "next/navigation";
+import { getCookie, clearCookie, authenticatedFetch } from "@/lib/utils";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  useIdleTimeout(600000);
+  useIdleTimeout(5 * 60 * 1000);
 
   const router = useRouter();
+  const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -56,24 +57,49 @@ export default function DashboardLayout({
 
     const verifySession = async () => {
       try {
-        const response = await fetch("/api/auth/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!response.ok && !cancelled) {
+        const response = await authenticatedFetch("/api/auth/me");
+        if (response.status === 401 && !cancelled) {
           clearCookie("auth_token");
           clearCookie("refresh_token");
-          router.push("/login");
+          router.push("/login?reason=session_expired");
         }
-      } catch {
-      }
+      } catch {}
     };
 
     verifySession();
 
     return () => {
       cancelled = true;
+    };
+  }, [router, pathname]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const tick = async () => {
+      const token = getCookie("auth_token");
+      if (!token) {
+        return;
+      }
+      try {
+        const response = await authenticatedFetch("/api/auth/me");
+
+        if (response.status === 401 && !cancelled) {
+          clearCookie("auth_token");
+          clearCookie("refresh_token");
+          router.push("/login?reason=session_expired");
+        }
+      } catch {}
+    };
+
+    const ttlCookie = getCookie("auth_token_ttl");
+    const ttlSeconds = ttlCookie ? parseInt(ttlCookie, 10) : 15 * 60;
+    const intervalMs = Math.max(1000, ttlSeconds * 1000);
+    const interval = setInterval(tick, intervalMs);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
     };
   }, [router]);
 

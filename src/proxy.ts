@@ -6,14 +6,19 @@ export function proxy(request: NextRequest) {
 
   const protectedRoutes = [
     "/analytics",
+    "/catering-packages",
+    "/consumables",
     "/customers",
     "/dashboard",
+    "/equipment",
     "/events",
-    "/menu",
+    "/maintenance",
     "/payments",
     "/reports",
     "/reservations",
-    "/staff",
+    "/stock_levels",
+    "/users",
+    "/add-ons",
   ];
   const isProtectedRoute = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)

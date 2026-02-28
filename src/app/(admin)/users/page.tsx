@@ -1,56 +1,124 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Search, Edit2, Trash2, X } from "lucide-react";
 import { Staff } from "@/lib/mock-data";
-import { formatDate, getCookie } from "@/lib/utils";
+import { formatDate, authenticatedFetch } from "@/lib/utils";
 
-export default function StaffPage() {
-  const [staffList, setStaffList] = useState<Staff[]>([]);
+type ApiUserRole = "ADMIN" | "STAFF";
+
+type ApiUser = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  phoneNumber: string | null;
+  role: ApiUserRole;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type UserRow = Staff & {
+  username: string;
+  firstName: string;
+  lastName: string;
+};
+
+type UserFormState = Partial<UserRow> & {
+  password?: string;
+};
+
+export default function UsersPage() {
+  const router = useRouter();
+  const [staffList, setStaffList] = useState<UserRow[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+  const [editingStaff, setEditingStaff] = useState<UserRow | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
-  // Form State
-  const [formData, setFormData] = useState<Partial<Staff>>({
+  const [formData, setFormData] = useState<UserFormState>({
     name: "",
     email: "",
     role: "Staff",
     phone: "",
     active: true,
+    username: "",
+    password: "",
   });
 
   useEffect(() => {
-    const fetchStaff = async () => {
-      try {
-        const token = getCookie("auth_token");
-        const response = await fetch("/api/users", {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
+    let cancelled = false;
 
-        if (!response.ok) {
-          let message = `Failed to load users (${response.status})`;
+    const fetchData = async () => {
+      try {
+        const [usersResponse, meResponse] = await Promise.all([
+          authenticatedFetch("/api/users", {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }),
+          authenticatedFetch("/api/auth/me", {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }),
+        ]);
+
+        if (usersResponse.status === 401 || meResponse.status === 401) {
+          if (!cancelled) {
+            router.push("/login?reason=session_expired");
+          }
+          return;
+        }
+
+        if (!usersResponse.ok) {
+          let message = `Failed to load users (${usersResponse.status})`;
           try {
-            const data = await response.json();
+            const data = await usersResponse.json();
             if (data && typeof data.message === "string") {
               message = data.message;
             }
           } catch {}
           console.error(message);
-          return;
+        } else {
+          const data = (await usersResponse.json()) as ApiUser[];
+          if (!cancelled) {
+            const mapped = data.map<UserRow>((user) => ({
+              id: String(user.id),
+              name: `${user.firstName} ${user.lastName}`,
+              email: user.email,
+              role: user.role === "ADMIN" ? "Admin" : "Staff",
+              active: true,
+              phone: user.phoneNumber ?? "",
+              joinedDate: user.createdAt,
+              username: user.username,
+              firstName: user.firstName,
+              lastName: user.lastName,
+            }));
+            setStaffList(mapped);
+          }
         }
 
-        const data = (await response.json()) as Staff[];
-        setStaffList(data);
+        if (meResponse.ok) {
+          try {
+            const me = (await meResponse.json()) as ApiUser;
+            if (!cancelled) {
+              setCurrentUserId(me.id);
+            }
+          } catch {}
+        }
       } catch (error) {
         console.error("Failed to fetch users:", error);
       }
     };
 
-    fetchStaff();
+    fetchData();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filteredStaff = staffList.filter(
@@ -59,10 +127,13 @@ export default function StaffPage() {
       staff.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleOpenModal = (staff?: Staff) => {
+  const handleOpenModal = (staff?: UserRow) => {
     if (staff) {
       setEditingStaff(staff);
-      setFormData(staff);
+      setFormData({
+        ...staff,
+        password: "",
+      });
     } else {
       setEditingStaff(null);
       setFormData({
@@ -71,20 +142,23 @@ export default function StaffPage() {
         role: "Staff",
         phone: "",
         active: true,
+        username: "",
+        password: "",
       });
     }
     setIsModalOpen(true);
   };
 
   const handleDelete = async (id: string) => {
+    if (currentUserId !== null && Number(id) === currentUserId) {
+      alert("You cannot delete your own account while logged in.");
+      return;
+    }
+
     if (confirm("Are you sure you want to delete this staff member?")) {
       try {
-        const token = getCookie("auth_token");
-        const response = await fetch(`/api/users/${id}`, {
+        const response = await authenticatedFetch(`/api/users/${id}`, {
           method: "DELETE",
-          headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
         });
 
         if (!response.ok) {
@@ -109,25 +183,66 @@ export default function StaffPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const token = getCookie("auth_token");
-      const payload = {
-        name: formData.name ?? "",
-        email: formData.email ?? "",
-        role: formData.role ?? "Staff",
-        phone: formData.phone ?? "",
-        active: formData.active ?? true,
-      };
 
+    const fullName = (formData.name ?? "").trim();
+    const username = (formData.username ?? "").trim();
+    const email = (formData.email ?? "").trim();
+    const phoneNumber = (formData.phone ?? "").trim();
+    const password = formData.password ?? "";
+
+    if (!fullName) {
+      alert("Full name is required.");
+      return;
+    }
+
+    if (!username) {
+      alert("Username is required.");
+      return;
+    }
+
+    const nameParts = fullName.split(" ").filter(Boolean);
+    const firstName = nameParts[0];
+    const lastName =
+      nameParts.length > 1 ? nameParts.slice(1).join(" ") : firstName;
+
+    if (!editingStaff && password.length < 6) {
+      alert("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (editingStaff && password && password.length < 6) {
+      alert("Password must be at least 6 characters.");
+      return;
+    }
+
+    try {
       const isEditing = Boolean(editingStaff);
       const url = isEditing ? `/api/users/${editingStaff?.id}` : "/api/users";
-      const method = isEditing ? "PUT" : "POST";
+      const method = isEditing ? "PATCH" : "POST";
 
-      const response = await fetch(url, {
+      const basePayload = {
+        firstName,
+        lastName,
+        username,
+        email,
+        phoneNumber,
+        role: (formData.role ?? "Staff") === "Admin" ? "ADMIN" : "STAFF",
+      };
+
+      const payload = isEditing
+        ? {
+            ...basePayload,
+            ...(password ? { password } : {}),
+          }
+        : {
+            ...basePayload,
+            password,
+          };
+
+      const response = await authenticatedFetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(payload),
       });
@@ -153,14 +268,26 @@ export default function StaffPage() {
         return;
       }
 
-      const savedStaff = data as Staff;
+      const savedUser = data as ApiUser;
+      const mappedRow: UserRow = {
+        id: String(savedUser.id),
+        name: `${savedUser.firstName} ${savedUser.lastName}`,
+        email: savedUser.email,
+        role: savedUser.role === "ADMIN" ? "Admin" : "Staff",
+        active: true,
+        phone: savedUser.phoneNumber ?? "",
+        joinedDate: savedUser.createdAt,
+        username: savedUser.username,
+        firstName: savedUser.firstName,
+        lastName: savedUser.lastName,
+      };
 
       if (isEditing && editingStaff) {
         setStaffList((prev) =>
-          prev.map((s) => (s.id === editingStaff.id ? savedStaff : s))
+          prev.map((s) => (s.id === editingStaff.id ? mappedRow : s))
         );
       } else {
-        setStaffList((prev) => [...prev, savedStaff]);
+        setStaffList((prev) => [...prev, mappedRow]);
       }
 
       setIsModalOpen(false);
@@ -172,11 +299,12 @@ export default function StaffPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Staff Management</h1>
-          <p className="text-sm text-gray-500">Manage user access and roles.</p>
+          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+          <p className="text-sm text-gray-500">
+            Manage administrator and staff accounts.
+          </p>
         </div>
         <button
           onClick={() => handleOpenModal()}
@@ -187,13 +315,12 @@ export default function StaffPage() {
         </button>
       </div>
 
-      {/* Filters */}
       <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search staff by name or email..."
+            placeholder="Search users by name or email..."
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zek-red/20 focus:border-zek-red"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -201,7 +328,6 @@ export default function StaffPage() {
         </div>
       </div>
 
-      {/* List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -274,7 +400,22 @@ export default function StaffPage() {
                     </button>
                     <button
                       onClick={() => handleDelete(staff.id)}
-                      className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded-lg transition-colors"
+                      disabled={
+                        currentUserId !== null &&
+                        Number(staff.id) === currentUserId
+                      }
+                      title={
+                        currentUserId !== null &&
+                        Number(staff.id) === currentUserId
+                          ? "You cannot delete your own account"
+                          : "Delete user"
+                      }
+                      className={`p-1 rounded-lg transition-colors ${
+                        currentUserId !== null &&
+                        Number(staff.id) === currentUserId
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-red-600 hover:text-red-900 hover:bg-red-50"
+                      }`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -286,7 +427,6 @@ export default function StaffPage() {
         </table>
       </div>
 
-      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
@@ -345,6 +485,36 @@ export default function StaffPage() {
                         setFormData({ ...formData, email: e.target.value })
                       }
                     />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Username
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zek-red/20 focus:border-zek-red"
+                        value={formData.username ?? ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, username: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        required={!editingStaff}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zek-red/20 focus:border-zek-red"
+                        value={formData.password ?? ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, password: e.target.value })
+                        }
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">

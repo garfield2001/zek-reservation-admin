@@ -18,7 +18,7 @@ import {
   BarChart,
 } from "lucide-react";
 import { MOCK_ACTIVITY_LOG } from "@/lib/mock-data";
-import { getCookie, clearCookie } from "@/lib/utils";
+import { getCookie, clearCookie, authenticatedFetch } from "@/lib/utils";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -56,14 +56,9 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
   const handleLogout = async () => {
     const token = getCookie("auth_token");
     if (token) {
-      try {
-        await fetch("/api/auth/logout", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      } catch {}
+      await authenticatedFetch("/api/auth/logout", {
+        method: "POST",
+      });
     }
     clearCookie("auth_token");
     clearCookie("refresh_token");
@@ -104,7 +99,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
           <div className="flex items-center gap-4">
             <button
               onClick={onToggleSidebar}
-              className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-zek-red transition-colors"
+              className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-zek-red transition-colors cursor-pointer"
             >
               <Menu className="h-6 w-6" />
             </button>
@@ -215,13 +210,6 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                   </div>
 
                   <div className="py-1 border-b border-gray-100">
-                    <Link
-                      href="/staff"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-zek-red"
-                    >
-                      <Users className="mr-3 h-4 w-4" />
-                      Manage Staffs
-                    </Link>
                     <Link
                       href="/analytics"
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-zek-red"

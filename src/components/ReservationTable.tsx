@@ -7,8 +7,8 @@ import { formatDate } from "@/lib/utils";
 interface ReservationTableProps {
   reservations: Reservation[];
   showDateRangeControls?: boolean;
-  recentRange?: "3" | "7" | "all" | "custom";
-  onRecentRangeChange?: (range: "3" | "7" | "all" | "custom") => void;
+  recentRange?: "3" | "7" | "30" | "all" | "custom";
+  onRecentRangeChange?: (range: "3" | "7" | "30" | "all" | "custom") => void;
   recentStartDate?: string;
   recentEndDate?: string;
   onRecentStartDateChange?: (value: string) => void;
@@ -46,17 +46,26 @@ export default function ReservationTable({
     { key: "all", label: "All dates" },
     { key: "3", label: "Last 3 days" },
     { key: "7", label: "Last 7 days" },
+    { key: "30", label: "Last 30 days" },
     { key: "custom", label: "Custom date range" },
   ] as const;
+
+  const heading =
+    showDateRangeControls && recentRange && recentRange !== "all"
+      ? "Recent Reservations"
+      : "Reservations";
+
+  const description =
+    showDateRangeControls && recentRange && recentRange !== "all"
+      ? "Bookings from the selected recent period"
+      : "All bookings matching the selected filters";
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm transition-shadow duration-300 hover:shadow-lg">
       <div className="px-6 pt-4 pb-5 border-b border-gray-100 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="space-y-1">
-          <h3 className="text-lg font-bold text-gray-900">
-            Recent Reservations
-          </h3>
-          <p className="text-sm text-gray-500">Latest booking activities</p>
+          <h3 className="text-lg font-bold text-gray-900">{heading}</h3>
+          <p className="text-sm text-gray-500">{description}</p>
         </div>
         <div className="flex flex-col items-stretch gap-2 sm:items-end">
           {showDateRangeControls && (
@@ -134,9 +143,10 @@ export default function ReservationTable({
               </div>
             </>
           )}
-          <button className="self-end text-xs sm:text-sm font-semibold text-zek-red hover:text-zek-light-red transition-colors">
-            View all
-          </button>
+          <p className="self-end text-xs sm:text-sm text-gray-400">
+            Showing {reservations.length} reservation
+            {reservations.length === 1 ? "" : "s"}
+          </p>
         </div>
       </div>
       <div className="overflow-x-auto">
